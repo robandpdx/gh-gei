@@ -141,6 +141,11 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 IsRequired = false,
                 Description = "Rewrite PR SHAs using lfs mapping file during migration."
             };
+            var lfsMigrate = new Option("--lfs-migrate")
+            {
+                IsRequired = false,
+                Description = "Migrate LFS objects during migration."
+            };
 
             AddOption(githubSourceOrg);
             AddOption(adoServerUrl);
@@ -167,6 +172,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             AddOption(adoPat);
             AddOption(verbose);
             AddOption(lfsMappingFile);
+            AddOption(lfsMigrate);
 
             Handler = CommandHandler.Create<MigrateRepoCommandArgs>(Invoke);
         }
@@ -192,6 +198,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                   args.GithubSourcePat,
                   args.LfsMappingFile,
                   args.SkipReleases,
+                  args.LfsMigrate,
                   args.NoSslVerify
                 );
 
@@ -285,6 +292,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
           string githubSourcePat,
           string lfsMappingFile,
           bool skipReleases,
+          bool lfsMigrate,
           bool noSslVerify = false)
         {
             if (string.IsNullOrWhiteSpace(azureStorageConnectionString))
@@ -321,8 +329,13 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
             var metadataArchiveContent = await azureApi.DownloadArchive(metadataArchiveUrl);
+
+            if (lfsMigrate)
+            {
+                //gitArchiveContent = await _lfsMigrator.LfsMigrate(gitArchiveContent);
+            }
             
-            if (lfsMappingFile is not null)
+            if (lfsMappingFile is not null || lfsMigrate)
             {
                 metadataArchiveContent = await _lfsShaMapper.MapShas(metadataArchiveContent, lfsMappingFile);
                 //metadataArchiveContent = ApplyLfsMappingFileToMetadata(metadataArchiveContent, lfsMappingFile);
@@ -475,6 +488,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 _log.LogInformation($"LFS MAPPING FILE: {args.LfsMappingFile}");
             }
+            if (args.LfsMigrate)
+            {
+                _log.LogInformation("LFS MIGRATE: true");
+            }
         }
     }
 
@@ -501,5 +518,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         public string GithubTargetPat { get; set; }
         public string AdoPat { get; set; }
         public string LfsMappingFile { get; set; }
+        public bool LfsMigrate { get; set; }
     }
 }

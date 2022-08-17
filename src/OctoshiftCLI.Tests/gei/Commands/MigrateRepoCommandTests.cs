@@ -52,7 +52,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
         {
             _command.Should().NotBeNull();
             _command.Name.Should().Be("migrate-repo");
-            _command.Options.Count.Should().Be(21);
+            _command.Options.Count.Should().Be(22);
 
             TestHelpers.VerifyCommandOption(_command.Options, "github-source-org", false);
             TestHelpers.VerifyCommandOption(_command.Options, "ado-server-url", false, true);
@@ -122,7 +122,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 TargetRepo = TARGET_REPO,
                 TargetApiUrl = TARGET_API_URL,
                 Wait = false,
-                LfsMappingFile = LFS_MAPPING_FILE
+                LfsMappingFile = LFS_MAPPING_FILE,
+                LfsMigrate = false
             };
             await _command.Invoke(args);
 
@@ -396,7 +397,8 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 GhesApiUrl = GHES_API_URL,
                 AzureStorageConnectionString = AZURE_CONNECTION_STRING,
                 Wait = true,
-                LfsMappingFile = LFS_MAPPING_FILE
+                LfsMappingFile = LFS_MAPPING_FILE,
+                LfsMigrate = true
             };
             await _command.Invoke(args);
 
@@ -715,7 +717,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
                 GhesApiUrl = GHES_API_URL,
                 AzureStorageConnectionString = AZURE_CONNECTION_STRING,
                 NoSslVerify = true,
-                Wait = true
+                Wait = true,
             };
             await _command.Invoke(args);
 
