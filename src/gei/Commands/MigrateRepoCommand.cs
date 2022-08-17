@@ -17,13 +17,14 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         private readonly IAzureApiFactory _azureApiFactory;
         private readonly EnvironmentVariableProvider _environmentVariableProvider;
         private readonly LfsShaMapper _lfsShaMapper;
+        private readonly LfsMigrator _lfsMigrator;
         private const int ARCHIVE_GENERATION_TIMEOUT_IN_HOURS = 10;
         private const int CHECK_STATUS_DELAY_IN_MILLISECONDS = 10000; // 10 seconds
         private const string GIT_ARCHIVE_FILE_NAME = "git_archive.tar.gz";
         private const string METADATA_ARCHIVE_FILE_NAME = "metadata_archive.tar.gz";
         private const string DEFAULT_GITHUB_BASE_URL = "https://github.com";
 
-        public MigrateRepoCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider, IAzureApiFactory azureApiFactory, LfsShaMapper lsfShaMapper) : base("migrate-repo")
+        public MigrateRepoCommand(OctoLogger log, ISourceGithubApiFactory sourceGithubApiFactory, ITargetGithubApiFactory targetGithubApiFactory, EnvironmentVariableProvider environmentVariableProvider, IAzureApiFactory azureApiFactory, LfsShaMapper lsfShaMapper, LfsMigrator lfsMigrator) : base("migrate-repo")
         {
             _log = log;
             _sourceGithubApiFactory = sourceGithubApiFactory;
@@ -31,6 +32,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _environmentVariableProvider = environmentVariableProvider;
             _azureApiFactory = azureApiFactory;
             _lfsShaMapper = lsfShaMapper;
+            _lfsMigrator = lfsMigrator;
 
             Description = "Invokes the GitHub APIs to migrate the repo and all repo data.";
 
@@ -332,7 +334,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             if (lfsMigrate)
             {
-                //gitArchiveContent = await _lfsMigrator.LfsMigrate(gitArchiveContent);
+                gitArchiveContent = await _lfsMigrator.LfsMigrate(gitArchiveContent);
             }
             
             if (lfsMappingFile is not null || lfsMigrate)
