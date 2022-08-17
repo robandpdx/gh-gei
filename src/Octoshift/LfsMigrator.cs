@@ -7,10 +7,7 @@ using System.Collections.Generic;
 namespace OctoshiftCLI;
 
 public class LfsMigrator
-{
-    internal Func<string, string, Task> WriteToFile = async (path, contents) => await File.WriteAllTextAsync(path, contents);
-    internal Func<string, string> ReadFile = fileName => File.ReadAllText(fileName);
-    
+{   
     private readonly OctoLogger _log;
     private readonly ArchiveHandler _archiveHandler;
 

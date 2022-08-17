@@ -15,17 +15,7 @@ namespace OctoshiftCLI.Tests
 
         public LfsMigratorTests()
         {
-            _lfsMigrator = new LfsMigrator(_mockOctoLogger.Object, _archiveHandler.Object)
-            {
-                WriteToFile = (_, contents) =>
-                {
-                    return Task.CompletedTask;
-                },
-                ReadFile = (_) =>
-                {
-                    return "Bunch of text with oldsha all over the place. oldsha here, oldsha there, oldsha everywhere.";
-                }
-            };
+            _lfsMigrator = new LfsMigrator(_mockOctoLogger.Object, _archiveHandler.Object);
         }
 
         [Fact]
