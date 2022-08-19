@@ -97,6 +97,16 @@ namespace OctoshiftCLI
             return await _client.GetAllAsync(url).Select(x => (string)x["name"]).ToListAsync();
         }
 
+        public virtual async Task<string> GetRepoCloneUrl(string org, string repo)
+        {
+            var url = $"{_apiUrl}/repos/{org}/{repo}";
+
+            var response = await _client.GetAsync(url);
+            var data = JObject.Parse(response);
+
+            return (string)data["clone_url"];
+        }
+
         public virtual async Task<bool> RepoExists(string org, string repo)
         {
             var url = $"{_apiUrl}/repos/{org}/{repo}";
@@ -456,6 +466,17 @@ namespace OctoshiftCLI
         {
             var url = $"{_apiUrl}/repos/{org}/{repo}";
             await _client.DeleteAsync(url);
+        }
+
+        public virtual async Task CreateRepo(string org, string repo)
+        {
+            var options = new
+            {
+                name = repo,
+                visibility = "private",
+            };
+            var url = $"{_apiUrl}/orgs/{org}/repos";
+            await _client.PostAsync(url, options);
         }
 
         public virtual async Task<int> StartGitArchiveGeneration(string org, string repo)

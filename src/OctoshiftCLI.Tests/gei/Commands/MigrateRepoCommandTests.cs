@@ -374,7 +374,7 @@ namespace OctoshiftCLI.Tests.GithubEnterpriseImporter.Commands
             _mockGithubApi.Setup(x => x.GetArchiveMigrationUrl(SOURCE_ORG, metadataArchiveId).Result).Returns(metadataArchiveUrl);
 
             _mockLfsShaMapper.Setup(lfs => lfs.MapShas(metadataArchiveContent, LFS_MAPPING_FILE).Result).Returns(new byte[] { 6, 7, 8, 9, 10 });
-            _mockLfsMigrator.Setup(lfs => lfs.LfsMigrate(gitArchiveContent).Result).Returns(new byte[] { 1, 2, 3, 4, 5 });
+            _mockLfsMigrator.Setup(lfs => lfs.LfsMigrate(GHES_API_URL, SOURCE_ORG, SOURCE_REPO, GITHUB_SOURCE_PAT, false).Result).Returns("test-lfs");
 
             _mockAzureApi.Setup(x => x.DownloadArchive(gitArchiveUrl).Result).Returns(gitArchiveContent);
             _mockAzureApi.Setup(x => x.DownloadArchive(metadataArchiveUrl).Result).Returns(metadataArchiveContent);

@@ -33,6 +33,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter
                 .AddSingleton<HttpDownloadService>()
                 .AddSingleton<IVersionProvider, VersionChecker>(sp => sp.GetRequiredService<VersionChecker>())
                 .AddSingleton<LfsShaMapper>()
+                .AddSingleton<LfsMigrator>()
                 .AddSingleton<ArchiveHandler>()
                 .AddTransient<ITargetGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())
                 .AddTransient<ISourceGithubApiFactory>(sp => sp.GetRequiredService<GithubApiFactory>())

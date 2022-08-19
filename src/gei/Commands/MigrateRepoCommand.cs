@@ -311,9 +311,17 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var ghesApi = noSslVerify ? _sourceGithubApiFactory.CreateClientNoSsl(ghesApiUrl, githubSourcePat) : _sourceGithubApiFactory.Create(ghesApiUrl, githubSourcePat);
             var azureApi = noSslVerify ? _azureApiFactory.CreateClientNoSsl(azureStorageConnectionString) : _azureApiFactory.Create(azureStorageConnectionString);
 
-            var gitDataArchiveId = await ghesApi.StartGitArchiveGeneration(githubSourceOrg, sourceRepo);
+            var sourceGitRepo = sourceRepo;
+            var sourceMetadataRepo = sourceRepo;
+
+            if (lfsMigrate)
+            {
+                sourceGitRepo = await _lfsMigrator.LfsMigrate(ghesApiUrl, githubSourceOrg, sourceRepo, githubSourcePat, noSslVerify);
+                lfsMappingFile = LfsMigrator.LFS_MAPPING_FILEPATH;
+            }
+            var gitDataArchiveId = await ghesApi.StartGitArchiveGeneration(githubSourceOrg, sourceGitRepo);
             _log.LogInformation($"Archive generation of git data started with id: {gitDataArchiveId}");
-            var metadataArchiveId = await ghesApi.StartMetadataArchiveGeneration(githubSourceOrg, sourceRepo, skipReleases);
+            var metadataArchiveId = await ghesApi.StartMetadataArchiveGeneration(githubSourceOrg, sourceMetadataRepo, skipReleases);
             _log.LogInformation($"Archive generation of metadata started with id: {metadataArchiveId}");
 
             var timeNow = $"{DateTime.Now:yyyy-MM-dd_HH-mm-ss}";
@@ -332,10 +340,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             _log.LogInformation($"Downloading archive from {metadataArchiveUrl}");
             var metadataArchiveContent = await azureApi.DownloadArchive(metadataArchiveUrl);
 
-            if (lfsMigrate)
-            {
-                gitArchiveContent = await _lfsMigrator.LfsMigrate(gitArchiveContent);
-            }
+            // if (lfsMigrate)
+            // {
+            //     gitArchiveContent = await _lfsMigrator.LfsMigrate(gitArchiveContent, githubSourceOrg, sourceRepo);
+            // }
             
             if (lfsMappingFile is not null || lfsMigrate)
             {

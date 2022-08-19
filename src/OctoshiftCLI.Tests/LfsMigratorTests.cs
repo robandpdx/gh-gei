@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using FluentAssertions;
 using Xunit;
 using Moq;
+using OctoshiftCLI.Contracts;
 
 namespace OctoshiftCLI.Tests
 {
@@ -10,12 +11,13 @@ namespace OctoshiftCLI.Tests
     {
         private readonly Mock<OctoLogger> _mockOctoLogger = TestHelpers.CreateMock<OctoLogger>();
         private readonly Mock<ArchiveHandler> _archiveHandler = TestHelpers.CreateMock<ArchiveHandler>();
+        private readonly Mock<ISourceGithubApiFactory> _mockSourceGithubApiFactory = new Mock<ISourceGithubApiFactory>();
 
         private readonly LfsMigrator _lfsMigrator;
 
         public LfsMigratorTests()
         {
-            _lfsMigrator = new LfsMigrator(_mockOctoLogger.Object, _archiveHandler.Object);
+            _lfsMigrator = new LfsMigrator(_mockOctoLogger.Object, _archiveHandler.Object, _mockSourceGithubApiFactory.Object);
         }
 
         [Fact]
@@ -28,9 +30,9 @@ namespace OctoshiftCLI.Tests
             _archiveHandler.Setup(m => m.Unpack(It.IsAny<byte[]>())).Returns(new string[] {"archiveExtracted/pull_requests_1.json", "archiveExtracted/pull_requests_2.json"});
             _archiveHandler.Setup(m => m.Pack("./archiveExtracted")).Returns(new byte[] { 6, 7, 8, 9, 10 });
 
-            var result = await _lfsMigrator.LfsMigrate(new byte[] { 6, 7, 8, 9, 10 });
+            var result = await _lfsMigrator.LfsMigrate("https://api.github.com", "ActionsDesk", "cascading-downstream-merge", "source-pat", false);
 
-            result.Should().BeEquivalentTo(new byte[] { 6, 7, 8, 9, 10 });
+            //result.Should().BeEquivalentTo(new byte[] { 6, 7, 8, 9, 10 });
             _archiveHandler.Verify(m => m.Unpack(It.IsAny<byte[]>()), Times.Once);
             _archiveHandler.Verify(m => m.Pack("./archiveExtracted"), Times.Once);
             _mockOctoLogger.Verify(m => m.LogInformation(It.IsAny<string>()), Times.Exactly(2));
