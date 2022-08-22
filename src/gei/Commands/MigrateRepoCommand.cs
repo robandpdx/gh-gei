@@ -317,7 +317,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             if (lfsMigrate)
             {
                 sourceGitRepo = await _lfsMigrator.LfsMigrate(ghesApiUrl, githubSourceOrg, sourceRepo, githubSourcePat, noSslVerify);
-                lfsMappingFile = LfsMigrator.LFS_MAPPING_FILEPATH;
+                lfsMappingFile = LfsMigrator.LFS_MIGRATION_DIR + Path.DirectorySeparatorChar + sourceRepo + Path.DirectorySeparatorChar + LfsMigrator.LFS_MAPPING_FILE;
             }
             var gitDataArchiveId = await ghesApi.StartGitArchiveGeneration(githubSourceOrg, sourceGitRepo);
             _log.LogInformation($"Archive generation of git data started with id: {gitDataArchiveId}");
