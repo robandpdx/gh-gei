@@ -506,6 +506,10 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             {
                 throw new OctoshiftCliException("LFS sha mapping is only supported when the source is GHES. Please set GHES_API_URL environment variable");
             }
+            if (args.LfsMigrate && !args.GhesApiUrl.HasValue())
+            {
+                throw new OctoshiftCliException("LFS Migration is only supported when the source is GHES. Please set GHES_API_URL environment variable");
+            }
         }
     }
 
