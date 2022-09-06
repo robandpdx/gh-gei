@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Text.RegularExpressions;
@@ -141,7 +140,7 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             var lfsMappingFile = new Option<string>("--lfs-mapping-file")
             {
                 IsRequired = false,
-                Description = "Rewrite PR SHAs using lfs mapping file during migration."
+                Description = "Rewrite PR SHAs using LFS mapping file during migration."
             };
             var lfsMigrate = new Option("--lfs-migrate")
             {
@@ -209,12 +208,6 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
 
             var githubApi = _targetGithubApiFactory.Create(args.TargetApiUrl, args.GithubTargetPat);
 
-            if (await githubApi.RepoExists(args.GithubTargetOrg, args.TargetRepo))
-            {
-                _log.LogWarning($"The Org '{args.GithubTargetOrg}' already contains a repository with the name '{args.TargetRepo}'. No operation will be performed");
-                return;
-            }
-
             var githubOrgId = await githubApi.GetOrganizationId(args.GithubTargetOrg);
             var sourceRepoUrl = GetSourceRepoUrl(args);
             var sourceToken = GetSourceToken(args);
@@ -223,16 +216,31 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 ? await githubApi.CreateGhecMigrationSource(githubOrgId)
                 : await githubApi.CreateAdoMigrationSource(githubOrgId, args.AdoServerUrl);
 
-            var migrationId = await githubApi.StartMigration(
-                migrationSourceId,
-                sourceRepoUrl,
-                githubOrgId,
-                args.TargetRepo,
-                sourceToken,
-                targetToken,
-                args.GitArchiveUrl,
-                args.MetadataArchiveUrl,
-                args.SkipReleases);
+            string migrationId;
+
+            try
+            {
+                migrationId = await githubApi.StartMigration(
+                    migrationSourceId,
+                    sourceRepoUrl,
+                    githubOrgId,
+                    args.TargetRepo,
+                    sourceToken,
+                    targetToken,
+                    args.GitArchiveUrl,
+                    args.MetadataArchiveUrl,
+                    args.SkipReleases);
+            }
+            catch (OctoshiftCliException ex)
+            {
+                if (ex.Message == $"A repository called {args.GithubTargetOrg}/{args.TargetRepo} already exists")
+                {
+                    _log.LogWarning($"The Org '{args.GithubTargetOrg}' already contains a repository with the name '{args.TargetRepo}'. No operation will be performed");
+                    return;
+                }
+
+                throw;
+            }
 
             if (!args.Wait)
             {
@@ -344,13 +352,12 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
             // {
             //     gitArchiveContent = await _lfsMigrator.LfsMigrate(gitArchiveContent, githubSourceOrg, sourceRepo);
             // }
-            
-            if (lfsMappingFile is not null || lfsMigrate)
+
+            if (lfsMappingFile.HasValue() || lfsMigrate)
             {
                 metadataArchiveContent = await _lfsShaMapper.MapShas(metadataArchiveContent, lfsMappingFile);
-                //metadataArchiveContent = ApplyLfsMappingFileToMetadata(metadataArchiveContent, lfsMappingFile);
             }
-            
+
             _log.LogInformation($"Uploading archive {gitArchiveFileName} to Azure Blob Storage");
             var authenticatedGitArchiveUri = await azureApi.UploadToBlob(gitArchiveFileName, gitArchiveContent);
             _log.LogInformation($"Uploading archive {metadataArchiveFileName} to Azure Blob Storage");
@@ -390,19 +397,23 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
         private void LogAndValidateOptions(MigrateRepoCommandArgs args)
         {
             _log.LogInformation("Migrating Repo...");
+
             if (!string.IsNullOrWhiteSpace(args.GithubSourceOrg))
             {
                 _log.LogInformation($"GITHUB SOURCE ORG: {args.GithubSourceOrg}");
             }
+
             if (!string.IsNullOrWhiteSpace(args.AdoServerUrl))
             {
                 _log.LogInformation($"ADO SERVER URL: {args.AdoServerUrl}");
             }
+
             if (!string.IsNullOrWhiteSpace(args.AdoSourceOrg))
             {
                 _log.LogInformation($"ADO SOURCE ORG: {args.AdoSourceOrg}");
                 _log.LogInformation($"ADO TEAM PROJECT: {args.AdoTeamProject}");
             }
+
             _log.LogInformation($"SOURCE REPO: {args.SourceRepo}");
             _log.LogInformation($"GITHUB TARGET ORG: {args.GithubTargetOrg}");
             _log.LogInformation($"TARGET REPO: {args.TargetRepo}");
@@ -494,7 +505,8 @@ namespace OctoshiftCLI.GithubEnterpriseImporter.Commands
                 _log.LogInformation($"GIT ARCHIVE URL: {args.GitArchiveUrl}");
                 _log.LogInformation($"METADATA ARCHIVE URL: {args.MetadataArchiveUrl}");
             }
-            if (args.LfsMappingFile is not null)
+
+            if (args.LfsMappingFile.HasValue())
             {
                 _log.LogInformation($"LFS MAPPING FILE: {args.LfsMappingFile}");
             }
